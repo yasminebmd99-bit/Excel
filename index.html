@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Manager - Gestion et Réorganisation de Fichiers</title>
+    <meta name="description"
+        content="Application web pour importer, fusionner et réorganiser vos fichiers Excel facilement">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- SheetJS Library for Excel Processing -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📊 Excel Manager</h1>
+            <p>Importez, fusionnez et réorganisez vos fichiers Excel en toute simplicité</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="import">📥 Import & Fusion</button>
+            <button class="tab-btn" data-tab="reorganize">🔄 Réorganisation</button>
+            <button class="tab-btn" data-tab="export">💾 Export</button>
+        </div>
+
+        <!-- Tab 1: Import & Merge -->
+        <div id="import" class="tab-content active">
+            <div class="card">
+                <h3><span class="card-icon">📁</span> Importer des fichiers Excel</h3>
+                <p>Sélectionnez plusieurs fichiers Excel (.xlsx, .xls, .csv) à fusionner</p>
+
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">☁️</div>
+                    <h3>Glissez vos fichiers ici</h3>
+                    <p>ou cliquez pour sélectionner</p>
+                    <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv">
+                </div>
+
+                <div id="fileListContainer" class="file-list hidden">
+                    <h4>Fichiers importés :</h4>
+                    <div id="fileList"></div>
+                </div>
+            </div>
+
+            <div class="card hidden" id="mergeCard">
+                <h3><span class="card-icon">🔗</span> Fusionner les fichiers</h3>
+                <p>Combinez tous les fichiers importés en un seul fichier consolidé</p>
+
+                <button class="btn btn-primary" id="mergeBtn">
+                    <span>🔗</span> Fusionner les fichiers
+                </button>
+
+                <div id="mergePreview" class="hidden mt-lg">
+                    <h4>Aperçu du fichier fusionné :</h4>
+                    <div class="table-container" id="mergeTableContainer"></div>
+                    <p class="mt-lg"><strong id="mergeStats"></strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Reorganize -->
+        <div id="reorganize" class="tab-content">
+            <div class="card" id="reorganizeImportCard">
+                <h3><span class="card-icon">📋</span> Importer un fichier à réorganiser</h3>
+                <p>Importez un fichier Excel avec des colonnes mal structurées</p>
+
+                <div class="upload-zone" id="reorganizeUploadZone">
+                    <div class="upload-icon">☁️</div>
+                    <h3>Glissez votre fichier ici</h3>
+                    <p>ou cliquez pour sélectionner</p>
+                    <input type="file" id="reorganizeFileInput" accept=".xlsx,.xls,.csv">
+                </div>
+            </div>
+
+            <div class="card hidden" id="mappingCard">
+                <h3><span class="card-icon">🎯</span> Réorganiser les colonnes</h3>
+                <p>Cliquez sur "Détection automatique" pour mapper automatiquement les colonnes</p>
+
+                <div id="autoMapContainer" class="mb-lg">
+                    <button class="btn btn-secondary" id="autoMapBtn">
+                        <span>✨</span> Détection automatique
+                    </button>
+                </div>
+
+                <!-- Option de formatage des numéros de téléphone -->
+                <div
+                    style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                    <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                        <input type="checkbox" id="removeLeadingZero" style="width: auto; cursor: pointer;">
+                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer le premier "0" des
+                            numéros de téléphone</span>
+                    </label>
+                    <p style="margin: var(--spacing-xs) 0 0 1.75rem; font-size: 0.875rem; color: var(--text-tertiary);">
+                        Utile pour les numéros français (ex: 0612345678 → 612345678)
+                    </p>
+                </div>
+
+                <div class="mapping-container">
+                    <div class="column-list">
+                        <h4>Colonnes actuelles</h4>
+                        <div id="currentColumns"></div>
+                    </div>
+
+                    <div class="mapping-arrow">→</div>
+
+                    <div class="column-list">
+                        <h4>Titres attendus</h4>
+                        <div id="targetColumns"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-success mt-lg" id="applyMappingBtn">
+                    <span>✓</span> Appliquer la réorganisation
+                </button>
+
+                <div id="reorganizePreview" class="hidden mt-lg">
+                    <h4>Aperçu du fichier réorganisé :</h4>
+                    <div class="table-container" id="reorganizeTableContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Export -->
+        <div id="export" class="tab-content">
+            <div class="card">
+                <h3><span class="card-icon">💾</span> Exporter votre fichier</h3>
+                <p id="exportMessage">Aucun fichier prêt à exporter. Veuillez d'abord fusionner ou réorganiser des
+                    fichiers.</p>
+
+                <div id="exportOptions" class="hidden">
+                    <h4>Choisissez le format d'export :</h4>
+                    <div class="format-selector">
+                        <label class="format-option selected">
+                            <input type="radio" name="exportFormat" value="xlsx" checked>
+                            <div class="format-icon">📗</div>
+                            <div class="format-label">XLSX</div>
+                            <div class="format-desc">Excel moderne</div>
+                        </label>
+
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="xls">
+                            <div class="format-icon">📘</div>
+                            <div class="format-label">XLS</div>
+                            <div class="format-desc">Excel legacy</div>
+                        </label>
+
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="csv">
+                            <div class="format-icon">📄</div>
+                            <div class="format-label">CSV</div>
+                            <div class="format-desc">Valeurs séparées</div>
+                        </label>
+
+                        <label class="format-option">
+                            <input type="radio" name="exportFormat" value="ods">
+                            <div class="format-icon">📙</div>
+                            <div class="format-label">ODS</div>
+                            <div class="format-desc">OpenDocument</div>
+                        </label>
+                    </div>
+
+                    <div class="mt-lg">
+                        <label for="exportFileName">
+                            <h4>Nom du fichier :</h4>
+                        </label>
+                        <input type="text" id="exportFileName" value="fichier_exporte" placeholder="Nom du fichier">
+                    </div>
+
+                    <button class="btn btn-primary mt-lg" id="exportBtn">
+                        <span>⬇️</span> Télécharger le fichier
+                    </button>
+
+                    <div id="exportPreview" class="mt-lg">
+                        <h4>Aperçu :</h4>
+                        <div class="table-container" id="exportTableContainer"></div>
+                        <p class="mt-lg"><strong id="exportStats"></strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+
+</html>
