@@ -89,33 +89,24 @@
                 <h3><span class="card-icon">🎯</span> Réorganiser les colonnes</h3>
                 <p>Cliquez sur "Détection automatique" pour mapper automatiquement les colonnes</p>
 
-                <div id="autoMapContainer" class="mb-lg">
+                <!-- Actions et options sur une ligne -->
+                <div
+                    style="display: flex; flex-wrap: wrap; gap: var(--spacing-md); align-items: center; margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border);">
                     <button class="btn btn-secondary" id="autoMapBtn">
                         <span>✨</span> Détection automatique
                     </button>
-                </div>
 
-                <!-- Options de formatage des numéros de téléphone -->
-                <div
-                    style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border);">
                     <label
-                        style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer; margin-bottom: var(--spacing-sm);">
+                        style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; padding: 0.5rem 1rem; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border);">
                         <input type="checkbox" id="removeLeadingZero" style="width: auto; cursor: pointer;">
-                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer le premier "0" des
-                            numéros de téléphone</span>
+                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer le 0</span>
                     </label>
-                    <p style="margin: 0 0 var(--spacing-md) 1.75rem; font-size: 0.875rem; color: var(--text-tertiary);">
-                        ex: 0612345678 → 612345678
-                    </p>
 
-                    <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; padding: 0.5rem 1rem; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border);">
                         <input type="checkbox" id="removePlus33" style="width: auto; cursor: pointer;">
-                        <span style="color: var(--text-primary); font-weight: 600;">🇫🇷 Supprimer le "+33" des
-                            numéros de téléphone</span>
+                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer +33</span>
                     </label>
-                    <p style="margin: var(--spacing-xs) 0 0 1.75rem; font-size: 0.875rem; color: var(--text-tertiary);">
-                        ex: +33612345678 → 612345678
-                    </p>
                 </div>
 
                 <div class="mapping-container">
