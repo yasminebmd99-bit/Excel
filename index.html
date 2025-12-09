@@ -95,16 +95,26 @@
                     </button>
                 </div>
 
-                <!-- Option de formatage des numéros de téléphone -->
+                <!-- Options de formatage des numéros de téléphone -->
                 <div
                     style="margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                    <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer; margin-bottom: var(--spacing-sm);">
                         <input type="checkbox" id="removeLeadingZero" style="width: auto; cursor: pointer;">
                         <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer le premier "0" des
                             numéros de téléphone</span>
                     </label>
+                    <p style="margin: 0 0 var(--spacing-md) 1.75rem; font-size: 0.875rem; color: var(--text-tertiary);">
+                        ex: 0612345678 → 612345678
+                    </p>
+
+                    <label style="display: flex; align-items: center; gap: var(--spacing-sm); cursor: pointer;">
+                        <input type="checkbox" id="removePlus33" style="width: auto; cursor: pointer;">
+                        <span style="color: var(--text-primary); font-weight: 600;">🇫🇷 Supprimer le "+33" des
+                            numéros de téléphone</span>
+                    </label>
                     <p style="margin: var(--spacing-xs) 0 0 1.75rem; font-size: 0.875rem; color: var(--text-tertiary);">
-                        Utile pour les numéros français (ex: 0612345678 → 612345678)
+                        ex: +33612345678 → 612345678
                     </p>
                 </div>
 

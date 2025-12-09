@@ -144,16 +144,29 @@ function similarity(s1, s2) {
     return (longer.length - editDistance(longer, shorter)) / longer.length;
 }
 
-function formatPhoneNumber(value) {
+function formatPhoneNumber(value, removeLeadingZero, removePlus33) {
     if (!value) return value;
 
-    const strValue = String(value).trim().replace(/[\s\-\.\(\)]/g, '');
+    let strValue = String(value).trim().replace(/[\s\-\.\(\)]/g, '');
 
-    if (/^0\d{9,}$/.test(strValue)) {
-        return strValue.substring(1);
+    // Remove +33 prefix if option is enabled
+    if (removePlus33) {
+        // Handle +33, 0033, 33 at the beginning
+        if (strValue.startsWith('+33')) {
+            strValue = strValue.substring(3);
+        } else if (strValue.startsWith('0033')) {
+            strValue = strValue.substring(4);
+        } else if (strValue.startsWith('33') && strValue.length >= 11) {
+            strValue = strValue.substring(2);
+        }
     }
 
-    return value;
+    // Remove leading 0 if option is enabled
+    if (removeLeadingZero && /^0\d{9,}$/.test(strValue)) {
+        strValue = strValue.substring(1);
+    }
+
+    return strValue;
 }
 
 // ========================================
@@ -543,6 +556,7 @@ function initReorganize() {
         const rows = data.slice(1);
 
         const removeLeadingZero = document.getElementById('removeLeadingZero').checked;
+        const removePlus33 = document.getElementById('removePlus33').checked;
 
         const newHeaders = new Array(headers.length);
         const newRows = [];
@@ -560,8 +574,8 @@ function initReorganize() {
             Object.entries(AppState.columnMapping).forEach(([source, target]) => {
                 let value = row[source];
 
-                if (removeLeadingZero && value) {
-                    value = formatPhoneNumber(value);
+                if ((removeLeadingZero || removePlus33) && value) {
+                    value = formatPhoneNumber(value, removeLeadingZero, removePlus33);
                 }
 
                 newRow[target] = value;
@@ -570,8 +584,8 @@ function initReorganize() {
                 if (AppState.columnMapping[index] === undefined) {
                     let value = cell;
 
-                    if (removeLeadingZero && value) {
-                        value = formatPhoneNumber(value);
+                    if ((removeLeadingZero || removePlus33) && value) {
+                        value = formatPhoneNumber(value, removeLeadingZero, removePlus33);
                     }
 
                     newRow[index] = value;
@@ -590,9 +604,14 @@ function initReorganize() {
 
         updateExportTab();
 
-        const message = removeLeadingZero
-            ? 'Réorganisation appliquée avec formatage des numéros de téléphone !'
-            : 'Réorganisation appliquée avec succès!';
+        let message = 'Réorganisation appliquée avec succès!';
+        if (removeLeadingZero && removePlus33) {
+            message = 'Réorganisation appliquée avec suppression du "0" et "+33" !';
+        } else if (removeLeadingZero) {
+            message = 'Réorganisation appliquée avec suppression du premier "0" !';
+        } else if (removePlus33) {
+            message = 'Réorganisation appliquée avec suppression du "+33" !';
+        }
         showAlert(message, 'success');
     });
 }
