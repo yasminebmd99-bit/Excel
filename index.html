@@ -4,14 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Manager - Gestion et Réorganisation de Fichiers</title>
+    <title>Excel Manager - Gestion et Réorganisation de Fichiers Excel</title>
     <meta name="description"
-        content="Application web pour importer, fusionner et réorganiser vos fichiers Excel facilement">
+        content="Application web pour importer, fusionner et réorganiser vos fichiers Excel facilement. Traitement 100% local dans votre navigateur.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@700;800&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap"
         rel="stylesheet">
 
     <!-- Styles -->
@@ -22,51 +23,123 @@
 </head>
 
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
             <h1>📊 Excel Manager</h1>
-            <p>Importez, fusionnez et réorganisez vos fichiers Excel en toute simplicité</p>
-        </header>
+            <p class="hero-subtitle">Importez, fusionnez et réorganisez vos fichiers Excel facilement</p>
+            <p class="hero-description">Un outil simple et gratuit pour gérer vos données Excel. Tout est traité
+                localement dans votre navigateur.</p>
+        </div>
+    </section>
 
-        <!-- Navigation Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="import">📥 Import & Fusion</button>
-            <button class="tab-btn" data-tab="reorganize">🔄 Réorganisation</button>
-            <button class="tab-btn" data-tab="export">💾 Export</button>
+    <!-- Privacy Notice -->
+    <div class="privacy-notice">
+        <div class="container">
+            <span>🔒</span>
+            <span><strong>100% Confidentiel</strong> - Vos données ne quittent jamais votre navigateur. Aucun fichier
+                n'est envoyé sur un serveur.</span>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <main class="container">
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Import</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Organisation</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Export</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation Cards -->
+        <div class="tab-cards">
+            <div class="tab-card active" data-tab="import">
+                <div class="tab-card-icon">📥</div>
+                <div class="tab-card-title">Import & Fusion</div>
+                <div class="tab-card-desc">Importer et fusionner vos fichiers</div>
+            </div>
+            <div class="tab-card" data-tab="reorganize">
+                <div class="tab-card-icon">🔄</div>
+                <div class="tab-card-title">Réorganisation</div>
+                <div class="tab-card-desc">Organiser l'ordre des colonnes</div>
+            </div>
+            <div class="tab-card" data-tab="export">
+                <div class="tab-card-icon">💾</div>
+                <div class="tab-card-title">Export</div>
+                <div class="tab-card-desc">Télécharger le fichier final</div>
+            </div>
         </div>
 
         <!-- Tab 1: Import & Merge -->
         <div id="import" class="tab-content active">
             <div class="card">
-                <h3><span class="card-icon">📁</span> Importer des fichiers Excel</h3>
-                <p>Sélectionnez plusieurs fichiers Excel (.xlsx, .xls, .csv) à fusionner</p>
+                <div class="card-header">
+                    <h3><span class="card-icon">📁</span> Importer des fichiers Excel</h3>
+                    <p>Déposez vos fichiers Excel ici pour les fusionner en un seul fichier</p>
+                </div>
 
                 <div class="upload-zone" id="uploadZone">
                     <div class="upload-icon">☁️</div>
-                    <h3>Glissez vos fichiers ici</h3>
-                    <p>ou cliquez pour sélectionner</p>
+                    <h3>Déposez vos fichiers Excel ici</h3>
+                    <p>ou cliquez pour les sélectionner</p>
+                    <div class="upload-formats">
+                        <span class="format-badge">XLSX</span>
+                        <span class="format-badge">XLS</span>
+                        <span class="format-badge">CSV</span>
+                    </div>
+                    <p class="upload-hint">Taille recommandée : moins de 10 Mo par fichier</p>
                     <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv">
                 </div>
 
+                <div class="example-download">
+                    <button class="btn btn-outline" id="downloadExampleBtn">
+                        <span>📄</span> Télécharger un fichier Excel d'exemple
+                    </button>
+                </div>
+
                 <div id="fileListContainer" class="file-list hidden">
-                    <h4>Fichiers importés :</h4>
+                    <div class="file-list-header">
+                        <h4>Fichiers importés</h4>
+                        <span class="file-count" id="fileCount">0 fichiers</span>
+                    </div>
                     <div id="fileList"></div>
+                    <div id="importStats" class="import-stats hidden"></div>
                 </div>
             </div>
 
             <div class="card hidden" id="mergeCard">
-                <h3><span class="card-icon">🔗</span> Fusionner les fichiers</h3>
-                <p>Combinez tous les fichiers importés en un seul fichier consolidé</p>
+                <div class="card-header">
+                    <h3><span class="card-icon">🔗</span> Fusionner les fichiers</h3>
+                    <p>Combinez tous les fichiers importés en un seul fichier consolidé</p>
+                </div>
 
-                <button class="btn btn-primary" id="mergeBtn">
+                <button class="btn btn-primary btn-lg" id="mergeBtn">
                     <span>🔗</span> Fusionner les fichiers
                 </button>
 
                 <div id="mergePreview" class="hidden mt-lg">
-                    <h4>Aperçu du fichier fusionné :</h4>
+                    <div class="preview-header">
+                        <h4>Aperçu du fichier fusionné</h4>
+                        <div class="preview-stats" id="mergeStats"></div>
+                    </div>
                     <div class="table-container" id="mergeTableContainer"></div>
-                    <p class="mt-lg"><strong id="mergeStats"></strong></p>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-lg" id="proceedToReorgBtn">
+                            <span>➡️</span> Passer à l'organisation des colonnes
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,62 +147,83 @@
         <!-- Tab 2: Reorganize -->
         <div id="reorganize" class="tab-content">
             <div class="card" id="reorganizeImportCard">
-                <h3><span class="card-icon">📋</span> Importer un fichier à réorganiser</h3>
-                <p>Importez un fichier Excel avec des colonnes mal structurées</p>
+                <div class="card-header">
+                    <h3><span class="card-icon">📋</span> Importer un fichier à réorganiser</h3>
+                    <p>Importez un fichier Excel pour réorganiser ses colonnes</p>
+                </div>
 
                 <div class="upload-zone" id="reorganizeUploadZone">
                     <div class="upload-icon">☁️</div>
-                    <h3>Glissez votre fichier ici</h3>
-                    <p>ou cliquez pour sélectionner</p>
+                    <h3>Déposez votre fichier ici</h3>
+                    <p>ou cliquez pour le sélectionner</p>
                     <input type="file" id="reorganizeFileInput" accept=".xlsx,.xls,.csv">
                 </div>
             </div>
 
             <div class="card hidden" id="mappingCard">
-                <h3><span class="card-icon">🎯</span> Réorganiser les colonnes</h3>
-                <p>Cliquez sur "Détection automatique" pour mapper automatiquement les colonnes</p>
+                <div class="card-header">
+                    <h3><span class="card-icon">🎯</span> Organiser les colonnes</h3>
+                    <p>Réorganisez l'ordre des colonnes par glisser-déposer et choisissez celles à afficher</p>
+                </div>
 
-                <!-- Actions et options sur une ligne -->
-                <div
-                    style="display: flex; flex-wrap: wrap; gap: var(--spacing-md); align-items: center; margin-bottom: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-tertiary); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                <!-- Actions Bar -->
+                <div class="actions-bar">
                     <button class="btn btn-secondary" id="autoMapBtn">
                         <span>✨</span> Détection automatique
                     </button>
 
-                    <label
-                        style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; padding: 0.5rem 1rem; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                        <input type="checkbox" id="removeLeadingZero" style="width: auto; cursor: pointer;">
-                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer le 0</span>
-                    </label>
+                    <div class="phone-options">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="removeLeadingZero">
+                            <span>📞 Supprimer le 0</span>
+                        </label>
 
-                    <label
-                        style="display: flex; align-items: center; gap: var(--spacing-xs); cursor: pointer; padding: 0.5rem 1rem; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                        <input type="checkbox" id="removePlus33" style="width: auto; cursor: pointer;">
-                        <span style="color: var(--text-primary); font-weight: 600;">📞 Supprimer +33</span>
-                    </label>
-                </div>
-
-                <div class="mapping-container">
-                    <div class="column-list">
-                        <h4>Colonnes actuelles</h4>
-                        <div id="currentColumns"></div>
-                    </div>
-
-                    <div class="mapping-arrow">→</div>
-
-                    <div class="column-list">
-                        <h4>Titres attendus</h4>
-                        <div id="targetColumns"></div>
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="removePlus33">
+                            <span>📞 Supprimer +33</span>
+                        </label>
                     </div>
                 </div>
 
-                <button class="btn btn-success mt-lg" id="applyMappingBtn">
+                <!-- Column Visibility Controls -->
+                <div class="column-controls">
+                    <div class="column-controls-header">
+                        <h4>Colonnes à afficher</h4>
+                        <div class="column-controls-actions">
+                            <button class="btn btn-sm" id="selectAllColumns">✓ Tout cocher</button>
+                            <button class="btn btn-sm" id="deselectAllColumns">✗ Tout décocher</button>
+                        </div>
+                    </div>
+                    <div id="columnCheckboxes" class="column-checkboxes"></div>
+                </div>
+
+                <!-- Drag & Drop Column Organizer -->
+                <div class="column-organizer">
+                    <h4>Ordre des colonnes <span class="hint">(glissez-déposez pour réorganiser)</span></h4>
+                    <div id="sortableColumns" class="sortable-columns"></div>
+                </div>
+
+                <!-- Preview -->
+                <div id="columnPreview" class="column-preview hidden">
+                    <h4>Aperçu</h4>
+                    <div class="table-container" id="previewTableContainer"></div>
+                </div>
+
+                <button class="btn btn-success btn-lg mt-lg" id="applyMappingBtn">
                     <span>✓</span> Appliquer la réorganisation
                 </button>
 
                 <div id="reorganizePreview" class="hidden mt-lg">
-                    <h4>Aperçu du fichier réorganisé :</h4>
+                    <div class="preview-header">
+                        <h4>Résultat de la réorganisation</h4>
+                    </div>
                     <div class="table-container" id="reorganizeTableContainer"></div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-success btn-lg" id="proceedToExportBtn">
+                            <span>💾</span> Passer à l'export
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -137,12 +231,19 @@
         <!-- Tab 3: Export -->
         <div id="export" class="tab-content">
             <div class="card">
-                <h3><span class="card-icon">💾</span> Exporter votre fichier</h3>
-                <p id="exportMessage">Aucun fichier prêt à exporter. Veuillez d'abord fusionner ou réorganiser des
-                    fichiers.</p>
+                <div class="card-header">
+                    <h3><span class="card-icon">💾</span> Exporter votre fichier</h3>
+                    <p id="exportMessage">Préparez votre fichier Excel pour le téléchargement</p>
+                </div>
+
+                <div id="noDataMessage" class="no-data-message">
+                    <div class="no-data-icon">📭</div>
+                    <p>Aucun fichier prêt à exporter.</p>
+                    <p>Veuillez d'abord fusionner ou réorganiser des fichiers.</p>
+                </div>
 
                 <div id="exportOptions" class="hidden">
-                    <h4>Choisissez le format d'export :</h4>
+                    <h4>Format de sortie</h4>
                     <div class="format-selector">
                         <label class="format-option selected">
                             <input type="radio" name="exportFormat" value="xlsx" checked>
@@ -173,29 +274,149 @@
                         </label>
                     </div>
 
-                    <div class="mt-lg">
+                    <div class="export-filename">
                         <label for="exportFileName">
-                            <h4>Nom du fichier :</h4>
+                            <h4>Nom du fichier</h4>
                         </label>
                         <input type="text" id="exportFileName" value="fichier_exporte" placeholder="Nom du fichier">
                     </div>
 
-                    <button class="btn btn-primary mt-lg" id="exportBtn">
-                        <span>⬇️</span> Télécharger le fichier
+                    <button class="btn btn-primary btn-xl" id="exportBtn">
+                        <span>⬇️</span> Télécharger le fichier Excel
                     </button>
 
                     <div id="exportPreview" class="mt-lg">
-                        <h4>Aperçu :</h4>
+                        <div class="preview-header">
+                            <h4>Aperçu du fichier</h4>
+                            <div class="preview-stats" id="exportStats"></div>
+                        </div>
                         <div class="table-container" id="exportTableContainer"></div>
-                        <p class="mt-lg"><strong id="exportStats"></strong></p>
                     </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- Alert Container -->
-        <div id="alertContainer"></div>
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Ce que permet l'outil</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Fusionner des fichiers</h3>
+                    <p>Combinez plusieurs fichiers Excel en un seul fichier consolidé avec toutes vos données.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Réorganiser les colonnes</h3>
+                    <p>Changez l'ordre des colonnes, masquez celles inutiles et structurez vos données.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Formater les numéros</h3>
+                    <p>Supprimez automatiquement le "0" ou "+33" des numéros de téléphone français.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>100% Confidentiel</h3>
+                    <p>Tout est traité localement dans votre navigateur. Aucune donnée n'est envoyée sur un serveur.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <h2>Comment ça marche ?</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number-large">1</div>
+                    <h3>Importez vos fichiers</h3>
+                    <p>Glissez-déposez vos fichiers Excel (XLSX, XLS, CSV) dans la zone d'import.</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-card">
+                    <div class="step-number-large">2</div>
+                    <h3>Organisez les colonnes</h3>
+                    <p>Réorganisez l'ordre des colonnes par glisser-déposer et masquez celles inutiles.</p>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-card">
+                    <div class="step-number-large">3</div>
+                    <h3>Téléchargez le résultat</h3>
+                    <p>Exportez votre fichier Excel nettoyé et bien structuré.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="container">
+            <h2>Questions fréquentes</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4>Quels formats sont supportés ?</h4>
+                    <p>L'outil supporte les formats XLSX (Excel moderne), XLS (Excel legacy), CSV (valeurs séparées par
+                        des virgules) et ODS (OpenDocument).</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Quelle est la taille maximale des fichiers ?</h4>
+                    <p>Nous recommandons des fichiers de moins de 10 Mo pour des performances optimales. Les fichiers
+                        plus volumineux peuvent ralentir le traitement.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Combien de fichiers puis-je fusionner ?</h4>
+                    <p>Vous pouvez fusionner autant de fichiers que vous le souhaitez. Cependant, pour des raisons de
+                        performance, nous recommandons de ne pas dépasser 50 000 lignes au total.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Mes données sont-elles sécurisées ?</h4>
+                    <p>Oui ! Tout le traitement se fait localement dans votre navigateur. Aucune donnée n'est envoyée
+                        sur un serveur. Vos fichiers restent sur votre ordinateur.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <h3>📊 Excel Manager</h3>
+                    <p>Un outil simple pour gérer vos fichiers Excel.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Liens utiles</h4>
+                    <a href="#features">Fonctionnalités</a>
+                    <a href="#how-it-works">Comment ça marche</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+                <div class="footer-legal">
+                    <h4>Légal</h4>
+                    <a href="#privacy">Politique de confidentialité</a>
+                    <a href="#terms">Mentions légales</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Excel Manager. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loader -->
+    <div id="loader" class="loader hidden">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p>Traitement en cours...</p>
+        </div>
     </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
 
     <!-- JavaScript -->
     <script src="app.js"></script>

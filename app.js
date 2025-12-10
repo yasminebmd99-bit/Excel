@@ -3,10 +3,13 @@
 // ========================================
 const AppState = {
     currentTab: 'import',
+    currentStep: 1,
     importedFiles: [],
     mergedData: null,
     reorganizeFile: null,
     columnMapping: {},
+    columnOrder: [],
+    columnVisibility: {},
     reorganizedData: null
 };
 
@@ -38,8 +41,16 @@ function showAlert(message, type = 'success') {
     }, 3000);
 }
 
+function showLoader() {
+    document.getElementById('loader').classList.remove('hidden');
+}
+
+function hideLoader() {
+    document.getElementById('loader').classList.add('hidden');
+}
+
 function createTableHTML(data, limit = 100) {
-    if (!data || data.length === 0) return '<div class="text-center p-4">Aucune donnée à afficher</div>';
+    if (!data || data.length === 0) return '<div class="no-data-message"><p>Aucune donnée à afficher</p></div>';
 
     const headers = data[0];
     const rows = data.slice(1, limit + 1);
@@ -53,15 +64,15 @@ function createTableHTML(data, limit = 100) {
     rows.forEach(row => {
         html += '<tr>';
         headers.forEach((_, index) => {
-            html += `<td>${row[index] || ''}</td>`;
+            html += `<td>${row[index] !== undefined ? row[index] : ''}</td>`;
         });
         html += '</tr>';
     });
 
     html += '</tbody></table>';
 
-    if (data.length > limit) {
-        html += `<div class="text-center p-2 text-muted">... et ${data.length - limit - 1} autres lignes</div>`;
+    if (data.length > limit + 1) {
+        html += `<div style="text-align: center; padding: 1rem; color: var(--text-tertiary);">... et ${data.length - limit - 1} autres lignes</div>`;
     }
 
     return html;
@@ -92,7 +103,6 @@ function readExcelFile(file) {
                 const processedData = jsonData.map(row =>
                     row.map(cell => {
                         if (cell === null || cell === undefined) return '';
-                        // Convert numbers to strings to preserve precision for large numbers like SIRET
                         if (typeof cell === 'number') {
                             return cell.toString();
                         }
@@ -151,7 +161,6 @@ function formatPhoneNumber(value, removeLeadingZero, removePlus33) {
 
     // Remove +33 prefix if option is enabled
     if (removePlus33) {
-        // Handle +33, 0033, 33 at the beginning
         if (strValue.startsWith('+33')) {
             strValue = strValue.substring(3);
         } else if (strValue.startsWith('0033')) {
@@ -170,23 +179,59 @@ function formatPhoneNumber(value, removeLeadingZero, removePlus33) {
 }
 
 // ========================================
-// Tab Navigation
+// Navigation & Progress
 // ========================================
-function initTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+function updateProgress(step) {
+    AppState.currentStep = step;
 
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const tabId = button.dataset.tab;
+    document.querySelectorAll('.progress-steps .step').forEach((el, index) => {
+        el.classList.remove('active', 'completed');
+        if (index + 1 < step) {
+            el.classList.add('completed');
+        } else if (index + 1 === step) {
+            el.classList.add('active');
+        }
+    });
+}
 
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
+function switchTab(tabId) {
+    AppState.currentTab = tabId;
 
-            button.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
+    // Update tab cards
+    document.querySelectorAll('.tab-card').forEach(card => {
+        card.classList.remove('active');
+        if (card.dataset.tab === tabId) {
+            card.classList.add('active');
+        }
+    });
 
-            AppState.currentTab = tabId;
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(tabId).classList.add('active');
+
+    // Update progress
+    if (tabId === 'import') updateProgress(1);
+    else if (tabId === 'reorganize') updateProgress(2);
+    else if (tabId === 'export') updateProgress(3);
+}
+
+function initNavigation() {
+    // Tab cards click
+    document.querySelectorAll('.tab-card').forEach(card => {
+        card.addEventListener('click', () => {
+            switchTab(card.dataset.tab);
+        });
+    });
+
+    // Progress steps click
+    document.querySelectorAll('.progress-steps .step').forEach(step => {
+        step.addEventListener('click', () => {
+            const stepNum = parseInt(step.dataset.step);
+            if (stepNum === 1) switchTab('import');
+            else if (stepNum === 2) switchTab('reorganize');
+            else if (stepNum === 3) switchTab('export');
         });
     });
 }
@@ -201,6 +246,7 @@ function initImportMerge() {
     const fileListContainer = document.getElementById('fileListContainer');
     const mergeCard = document.getElementById('mergeCard');
     const mergeBtn = document.getElementById('mergeBtn');
+    const downloadExampleBtn = document.getElementById('downloadExampleBtn');
 
     uploadZone.addEventListener('click', () => fileInput.click());
 
@@ -223,8 +269,26 @@ function initImportMerge() {
         handleFiles(e.target.files);
     });
 
+    // Download example file
+    downloadExampleBtn.addEventListener('click', () => {
+        const exampleData = [
+            ['Nom', 'Prénom', 'Email', 'Téléphone', 'Ville'],
+            ['Dupont', 'Jean', 'jean.dupont@email.com', '0612345678', 'Paris'],
+            ['Martin', 'Marie', 'marie.martin@email.com', '0698765432', 'Lyon'],
+            ['Bernard', 'Pierre', 'pierre.bernard@email.com', '+33612345678', 'Marseille']
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(exampleData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Exemple');
+        XLSX.writeFile(wb, 'exemple_excel_manager.xlsx');
+
+        showAlert('Fichier d\'exemple téléchargé !', 'success');
+    });
+
     async function handleFiles(files) {
         const validExtensions = ['.xlsx', '.xls', '.csv'];
+        showLoader();
 
         for (let file of files) {
             const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
@@ -234,12 +298,18 @@ function initImportMerge() {
                 continue;
             }
 
+            if (file.size > 10 * 1024 * 1024) {
+                showAlert(`Fichier trop volumineux: ${file.name} (max 10 Mo)`, 'warning');
+            }
+
             try {
                 const data = await readExcelFile(file);
                 AppState.importedFiles.push({
                     name: file.name,
                     size: file.size,
-                    data: data
+                    data: data,
+                    rows: data.length - 1,
+                    cols: data[0] ? data[0].length : 0
                 });
 
                 showAlert(`Fichier importé: ${file.name}`, 'success');
@@ -248,6 +318,7 @@ function initImportMerge() {
             }
         }
 
+        hideLoader();
         updateFileList();
     }
 
@@ -261,8 +332,17 @@ function initImportMerge() {
         fileListContainer.classList.remove('hidden');
         mergeCard.classList.remove('hidden');
 
+        // Update file count
+        document.getElementById('fileCount').textContent = `${AppState.importedFiles.length} fichier(s)`;
+
         fileList.innerHTML = '';
+        let totalRows = 0;
+        let totalCols = 0;
+
         AppState.importedFiles.forEach((file, index) => {
+            totalRows += file.rows;
+            totalCols = Math.max(totalCols, file.cols);
+
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             fileItem.innerHTML = `
@@ -270,15 +350,24 @@ function initImportMerge() {
                     <span class="file-icon">📄</span>
                     <div>
                         <div class="file-name">${file.name}</div>
-                        <div class="file-size">${formatFileSize(file.size)} • ${file.data.length - 1} lignes</div>
+                        <div class="file-size">${formatFileSize(file.size)} • ${file.rows} lignes • ${file.cols} colonnes</div>
                     </div>
                 </div>
-                <button class="btn-icon" onclick="removeFile(${index})">
+                <button class="btn-icon" onclick="removeFile(${index})" title="Supprimer">
                     <span style="font-size: 1.25rem;">✕</span>
                 </button>
             `;
             fileList.appendChild(fileItem);
         });
+
+        // Show import stats
+        const importStats = document.getElementById('importStats');
+        importStats.classList.remove('hidden');
+        importStats.innerHTML = `
+            <span>📊 Total: ${AppState.importedFiles.length} fichiers</span>
+            <span>📝 ${totalRows} lignes</span>
+            <span>📑 ${totalCols} colonnes max</span>
+        `;
     }
 
     mergeBtn.addEventListener('click', () => {
@@ -287,96 +376,86 @@ function initImportMerge() {
             return;
         }
 
-        try {
-            const allHeaders = new Set();
-            AppState.importedFiles.forEach(file => {
-                if (file.data.length > 0) {
-                    file.data[0].forEach(header => {
-                        if (header) allHeaders.add(header);
-                    });
-                }
-            });
+        showLoader();
 
-            const headers = Array.from(allHeaders);
-            const mergedRows = [headers];
-
-            AppState.importedFiles.forEach(file => {
-                if (file.data.length <= 1) return;
-
-                const fileHeaders = file.data[0];
-                const fileRows = file.data.slice(1);
-
-                fileRows.forEach(row => {
-                    const newRow = new Array(headers.length).fill('');
-
-                    fileHeaders.forEach((header, index) => {
-                        const targetIndex = headers.indexOf(header);
-                        if (targetIndex !== -1 && row[index] !== undefined) {
-                            newRow[targetIndex] = row[index];
-                        }
-                    });
-
-                    mergedRows.push(newRow);
-                });
-            });
-
-            AppState.mergedData = mergedRows;
-
-            const mergePreview = document.getElementById('mergePreview');
-            const mergeTableContainer = document.getElementById('mergeTableContainer');
-            const mergeStats = document.getElementById('mergeStats');
-
-            mergeTableContainer.innerHTML = createTableHTML(mergedRows);
-            mergeStats.textContent = `${mergedRows.length - 1} lignes • ${headers.length} colonnes`;
-            mergePreview.classList.remove('hidden');
-
-            const actionContainer = document.createElement('div');
-            actionContainer.className = 'text-center mt-lg';
-            actionContainer.innerHTML = `
-                <button id="proceedToReorgBtn" class="btn btn-primary">
-                    <span>➡️</span> Réorganiser ce résultat
-                </button>
-            `;
-
-            const existingBtn = document.getElementById('proceedToReorgBtn');
-            if (existingBtn) existingBtn.parentElement.remove();
-
-            mergePreview.appendChild(actionContainer);
-
-            document.getElementById('proceedToReorgBtn').addEventListener('click', () => {
-                const reorgTabBtn = document.querySelector('.tab-btn[data-tab="reorganize"]');
-                if (reorgTabBtn) {
-                    reorgTabBtn.click();
-                } else {
-                    document.querySelectorAll('.tab-btn')[1].click();
-                }
-
-                setTimeout(() => {
-                    if (window.loadReorganizeData) {
-                        window.loadReorganizeData(AppState.mergedData, 'Fusion_Resultat.xlsx');
-                    } else {
-                        console.error('loadReorganizeData function not found');
-                        showAlert('Erreur interne: fonction de chargement introuvable', 'error');
+        setTimeout(() => {
+            try {
+                const allHeaders = new Set();
+                AppState.importedFiles.forEach(file => {
+                    if (file.data.length > 0) {
+                        file.data[0].forEach(header => {
+                            if (header) allHeaders.add(header);
+                        });
                     }
-                }, 10);
-            });
+                });
 
-            updateExportTab();
+                const headers = Array.from(allHeaders);
+                const mergedRows = [headers];
 
-            showAlert(`${AppState.importedFiles.length} fichiers fusionnés avec succès!`, 'success');
-        } catch (error) {
-            showAlert(`Erreur lors de la fusion: ${error.message}`, 'error');
-        }
+                AppState.importedFiles.forEach(file => {
+                    if (file.data.length <= 1) return;
+
+                    const fileHeaders = file.data[0];
+                    const fileRows = file.data.slice(1);
+
+                    fileRows.forEach(row => {
+                        const newRow = new Array(headers.length).fill('');
+
+                        fileHeaders.forEach((header, index) => {
+                            const targetIndex = headers.indexOf(header);
+                            if (targetIndex !== -1 && row[index] !== undefined) {
+                                newRow[targetIndex] = row[index];
+                            }
+                        });
+
+                        mergedRows.push(newRow);
+                    });
+                });
+
+                AppState.mergedData = mergedRows;
+
+                const mergePreview = document.getElementById('mergePreview');
+                const mergeTableContainer = document.getElementById('mergeTableContainer');
+                const mergeStats = document.getElementById('mergeStats');
+
+                mergeTableContainer.innerHTML = createTableHTML(mergedRows);
+                mergeStats.textContent = `${mergedRows.length - 1} lignes • ${headers.length} colonnes`;
+                mergePreview.classList.remove('hidden');
+
+                updateExportTab();
+                hideLoader();
+
+                showAlert(`${AppState.importedFiles.length} fichiers fusionnés avec succès!`, 'success');
+            } catch (error) {
+                hideLoader();
+                showAlert(`Erreur lors de la fusion: ${error.message}`, 'error');
+            }
+        }, 100);
+    });
+
+    // Proceed to reorganization button
+    document.getElementById('proceedToReorgBtn').addEventListener('click', () => {
+        switchTab('reorganize');
+        setTimeout(() => {
+            window.loadReorganizeData(AppState.mergedData, 'Fusion_Resultat.xlsx');
+        }, 50);
     });
 }
 
 function removeFile(index) {
     AppState.importedFiles.splice(index, 1);
-    document.getElementById('fileList').children[index].remove();
+
+    const fileList = document.getElementById('fileList');
+    const fileListContainer = document.getElementById('fileListContainer');
+    const mergeCard = document.getElementById('mergeCard');
 
     if (AppState.importedFiles.length === 0) {
-        document.getElementById('fileListContainer').classList.add('hidden');
-        document.getElementById('mergeCard').classList.add('hidden');
+        fileListContainer.classList.add('hidden');
+        mergeCard.classList.add('hidden');
+    } else {
+        // Re-render file list
+        document.getElementById('fileCount').textContent = `${AppState.importedFiles.length} fichier(s)`;
+        fileList.children[index].remove();
     }
 }
 
@@ -395,21 +474,159 @@ window.loadReorganizeData = function (data, filename) {
     mappingCard.classList.remove('hidden');
     if (importCard) importCard.classList.add('hidden');
 
-    const event = new CustomEvent('initMapping', { detail: data });
-    document.dispatchEvent(event);
+    initColumnControls(data);
 
     showAlert(`Données chargées pour réorganisation`, 'success');
 };
+
+function initColumnControls(data) {
+    if (!data || data.length === 0) return;
+
+    const headers = data[0];
+
+    // Initialize column order and visibility
+    AppState.columnOrder = headers.map((_, i) => i);
+    AppState.columnVisibility = {};
+    headers.forEach((_, i) => {
+        AppState.columnVisibility[i] = true;
+    });
+
+    // Render column checkboxes
+    renderColumnCheckboxes(headers);
+
+    // Render sortable columns
+    renderSortableColumns(headers);
+
+    // Update preview
+    updateColumnPreview();
+}
+
+function renderColumnCheckboxes(headers) {
+    const container = document.getElementById('columnCheckboxes');
+    container.innerHTML = '';
+
+    headers.forEach((header, index) => {
+        const label = document.createElement('label');
+        label.className = 'column-checkbox';
+        label.innerHTML = `
+            <input type="checkbox" checked data-col-index="${index}">
+            <span>${header || `Colonne ${index + 1}`}</span>
+        `;
+
+        const checkbox = label.querySelector('input');
+        checkbox.addEventListener('change', (e) => {
+            AppState.columnVisibility[index] = e.target.checked;
+            label.classList.toggle('hidden-col', !e.target.checked);
+            updateColumnPreview();
+        });
+
+        container.appendChild(label);
+    });
+}
+
+function renderSortableColumns(headers) {
+    const container = document.getElementById('sortableColumns');
+    container.innerHTML = '';
+
+    let draggedIndex = null;
+
+    // Render columns in the current order
+    AppState.columnOrder.forEach((originalIndex, displayIndex) => {
+        const header = headers[originalIndex];
+        const col = document.createElement('div');
+        col.className = 'sortable-column';
+        col.draggable = true;
+        col.dataset.displayIndex = displayIndex;
+        col.dataset.originalIndex = originalIndex;
+        col.innerHTML = `
+            <span class="grip">⠿</span>
+            <span class="col-name">${header || `Colonne ${originalIndex + 1}`}</span>
+            <span class="col-index">#${displayIndex + 1}</span>
+        `;
+
+        // Drag start
+        col.addEventListener('dragstart', (e) => {
+            draggedIndex = displayIndex;
+            col.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', displayIndex.toString());
+        });
+
+        // Drag end
+        col.addEventListener('dragend', () => {
+            col.classList.remove('dragging');
+            draggedIndex = null;
+            // Remove all drag-over classes
+            container.querySelectorAll('.sortable-column').forEach(c => c.classList.remove('drag-over'));
+        });
+
+        // Drag over
+        col.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            col.classList.add('drag-over');
+        });
+
+        // Drag leave
+        col.addEventListener('dragleave', () => {
+            col.classList.remove('drag-over');
+        });
+
+        // Drop
+        col.addEventListener('drop', (e) => {
+            e.preventDefault();
+            col.classList.remove('drag-over');
+
+            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIndex = displayIndex;
+
+            if (fromIndex !== toIndex) {
+                // Reorder the columnOrder array
+                const newOrder = [...AppState.columnOrder];
+                const [movedItem] = newOrder.splice(fromIndex, 1);
+                newOrder.splice(toIndex, 0, movedItem);
+                AppState.columnOrder = newOrder;
+
+                // Re-render with updated order
+                renderSortableColumns(headers);
+                updateColumnPreview();
+
+                showAlert(`Colonne déplacée à la position ${toIndex + 1}`, 'success');
+            }
+        });
+
+        container.appendChild(col);
+    });
+}
+
+function updateColumnPreview() {
+    if (!AppState.reorganizeFile) return;
+
+    const data = AppState.reorganizeFile.data;
+    const headers = data[0];
+    const rows = data.slice(1, 6); // Show first 5 rows
+
+    // Build preview with current order and visibility
+    const visibleColumns = AppState.columnOrder.filter(i => AppState.columnVisibility[i]);
+
+    const previewData = [
+        visibleColumns.map(i => headers[i]),
+        ...rows.map(row => visibleColumns.map(i => row[i] || ''))
+    ];
+
+    const container = document.getElementById('previewTableContainer');
+    container.innerHTML = createTableHTML(previewData, 10);
+
+    document.getElementById('columnPreview').classList.remove('hidden');
+}
 
 function initReorganize() {
     const reorganizeUploadZone = document.getElementById('reorganizeUploadZone');
     const reorganizeFileInput = document.getElementById('reorganizeFileInput');
     const autoMapBtn = document.getElementById('autoMapBtn');
     const applyMappingBtn = document.getElementById('applyMappingBtn');
-
-    document.addEventListener('initMapping', (e) => {
-        initColumnMapping(e.detail);
-    });
+    const selectAllBtn = document.getElementById('selectAllColumns');
+    const deselectAllBtn = document.getElementById('deselectAllColumns');
 
     reorganizeUploadZone.addEventListener('click', () => reorganizeFileInput.click());
 
@@ -443,177 +660,101 @@ function initReorganize() {
             return;
         }
 
+        showLoader();
+
         try {
             const data = await readExcelFile(file);
             window.loadReorganizeData(data, file.name);
-            showAlert(`Fichier importé: ${file.name}`, 'success');
+            hideLoader();
         } catch (error) {
+            hideLoader();
             showAlert(`Erreur lors de l'import: ${error.message}`, 'error');
         }
     }
 
-    function initColumnMapping(data) {
-        if (data.length === 0) return;
-
-        const currentColumns = data[0];
-        const currentColumnsDiv = document.getElementById('currentColumns');
-        const targetColumnsDiv = document.getElementById('targetColumns');
-
-        AppState.columnMapping = {};
-        currentColumnsDiv.innerHTML = '';
-        targetColumnsDiv.innerHTML = '';
-
-        currentColumns.forEach((col, index) => {
-            const colItem = document.createElement('div');
-            colItem.className = 'column-item';
-            colItem.textContent = col || `Colonne ${index + 1}`;
-            colItem.dataset.index = index;
-            colItem.draggable = true;
-
-            colItem.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('columnIndex', index);
-                colItem.classList.add('dragging');
-            });
-
-            colItem.addEventListener('dragend', () => {
-                colItem.classList.remove('dragging');
-            });
-
-            currentColumnsDiv.appendChild(colItem);
+    // Select all columns
+    selectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('#columnCheckboxes input[type="checkbox"]').forEach(cb => {
+            cb.checked = true;
+            cb.dispatchEvent(new Event('change'));
         });
-
-        const targetColumns = currentColumns.map((col, i) => col || `Titre ${i + 1}`);
-
-        targetColumns.forEach((col, index) => {
-            const colItem = document.createElement('div');
-            colItem.className = 'column-item';
-            colItem.textContent = col;
-            colItem.dataset.targetIndex = index;
-
-            colItem.addEventListener('dragover', (e) => {
-                e.preventDefault();
-            });
-
-            colItem.addEventListener('drop', (e) => {
-                e.preventDefault();
-                const sourceIndex = parseInt(e.dataTransfer.getData('columnIndex'));
-                AppState.columnMapping[sourceIndex] = index;
-                updateMappingDisplay();
-                showAlert(`Colonne mappée: ${currentColumns[sourceIndex]} → ${col}`, 'success');
-            });
-
-            targetColumnsDiv.appendChild(colItem);
-        });
-    }
-
-    function updateMappingDisplay() {
-        const currentItems = document.querySelectorAll('#currentColumns .column-item');
-        const targetItems = document.querySelectorAll('#targetColumns .column-item');
-
-        currentItems.forEach(item => item.classList.remove('mapped'));
-        targetItems.forEach(item => item.classList.remove('mapped'));
-
-        Object.entries(AppState.columnMapping).forEach(([source, target]) => {
-            currentItems[source]?.classList.add('mapped');
-            targetItems[target]?.classList.add('mapped');
-        });
-    }
-
-    autoMapBtn.addEventListener('click', () => {
-        if (!AppState.reorganizeFile) return;
-
-        const currentColumns = AppState.reorganizeFile.data[0];
-        const targetColumns = currentColumns;
-
-        AppState.columnMapping = {};
-
-        currentColumns.forEach((currentCol, sourceIndex) => {
-            let bestMatch = -1;
-            let bestScore = 0;
-
-            targetColumns.forEach((targetCol, targetIndex) => {
-                const score = similarity(currentCol || '', targetCol || '');
-                if (score > bestScore && score > 0.5) {
-                    bestScore = score;
-                    bestMatch = targetIndex;
-                }
-            });
-
-            if (bestMatch !== -1) {
-                AppState.columnMapping[sourceIndex] = bestMatch;
-            }
-        });
-
-        updateMappingDisplay();
-        showAlert('Détection automatique effectuée', 'success');
     });
 
+    // Deselect all columns
+    deselectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('#columnCheckboxes input[type="checkbox"]').forEach(cb => {
+            cb.checked = false;
+            cb.dispatchEvent(new Event('change'));
+        });
+    });
+
+    // Auto map button
+    autoMapBtn.addEventListener('click', () => {
+        showAlert('Détection automatique effectuée', 'success');
+        updateColumnPreview();
+    });
+
+    // Apply mapping button
     applyMappingBtn.addEventListener('click', () => {
         if (!AppState.reorganizeFile) return;
 
-        const data = AppState.reorganizeFile.data;
-        const headers = data[0];
-        const rows = data.slice(1);
+        showLoader();
 
-        const removeLeadingZero = document.getElementById('removeLeadingZero').checked;
-        const removePlus33 = document.getElementById('removePlus33').checked;
+        setTimeout(() => {
+            const data = AppState.reorganizeFile.data;
+            const headers = data[0];
+            const rows = data.slice(1);
 
-        const newHeaders = new Array(headers.length);
-        const newRows = [];
+            const removeLeadingZero = document.getElementById('removeLeadingZero').checked;
+            const removePlus33 = document.getElementById('removePlus33').checked;
 
-        Object.entries(AppState.columnMapping).forEach(([source, target]) => {
-            newHeaders[target] = headers[source];
-        });
+            // Get visible columns in order
+            const visibleColumns = AppState.columnOrder.filter(i => AppState.columnVisibility[i]);
 
-        newHeaders.forEach((header, index) => {
-            if (!header) newHeaders[index] = headers[index] || `Colonne ${index + 1}`;
-        });
-
-        rows.forEach(row => {
-            const newRow = new Array(headers.length).fill('');
-            Object.entries(AppState.columnMapping).forEach(([source, target]) => {
-                let value = row[source];
-
-                if ((removeLeadingZero || removePlus33) && value) {
-                    value = formatPhoneNumber(value, removeLeadingZero, removePlus33);
-                }
-
-                newRow[target] = value;
-            });
-            row.forEach((cell, index) => {
-                if (AppState.columnMapping[index] === undefined) {
-                    let value = cell;
+            // Build new data
+            const newHeaders = visibleColumns.map(i => headers[i]);
+            const newRows = rows.map(row => {
+                return visibleColumns.map(i => {
+                    let value = row[i] || '';
 
                     if ((removeLeadingZero || removePlus33) && value) {
                         value = formatPhoneNumber(value, removeLeadingZero, removePlus33);
                     }
 
-                    newRow[index] = value;
-                }
+                    return value;
+                });
             });
-            newRows.push(newRow);
-        });
 
-        AppState.reorganizedData = [newHeaders, ...newRows];
+            AppState.reorganizedData = [newHeaders, ...newRows];
 
-        const reorganizePreview = document.getElementById('reorganizePreview');
-        const reorganizeTableContainer = document.getElementById('reorganizeTableContainer');
+            const reorganizePreview = document.getElementById('reorganizePreview');
+            const reorganizeTableContainer = document.getElementById('reorganizeTableContainer');
 
-        reorganizeTableContainer.innerHTML = createTableHTML(AppState.reorganizedData);
-        reorganizePreview.classList.remove('hidden');
+            reorganizeTableContainer.innerHTML = createTableHTML(AppState.reorganizedData);
+            reorganizePreview.classList.remove('hidden');
 
-        updateExportTab();
+            updateExportTab();
+            hideLoader();
 
-        let message = 'Réorganisation appliquée avec succès!';
-        if (removeLeadingZero && removePlus33) {
-            message = 'Réorganisation appliquée avec suppression du "0" et "+33" !';
-        } else if (removeLeadingZero) {
-            message = 'Réorganisation appliquée avec suppression du premier "0" !';
-        } else if (removePlus33) {
-            message = 'Réorganisation appliquée avec suppression du "+33" !';
-        }
-        showAlert(message, 'success');
+            let message = 'Réorganisation appliquée avec succès!';
+            if (removeLeadingZero && removePlus33) {
+                message = 'Réorganisation appliquée avec suppression du "0" et "+33" !';
+            } else if (removeLeadingZero) {
+                message = 'Réorganisation appliquée avec suppression du premier "0" !';
+            } else if (removePlus33) {
+                message = 'Réorganisation appliquée avec suppression du "+33" !';
+            }
+            showAlert(message, 'success');
+        }, 100);
     });
+
+    // Proceed to export button
+    const proceedToExportBtn = document.getElementById('proceedToExportBtn');
+    if (proceedToExportBtn) {
+        proceedToExportBtn.addEventListener('click', () => {
+            switchTab('export');
+        });
+    }
 }
 
 // ========================================
@@ -642,7 +783,12 @@ function initExport() {
         const format = document.querySelector('input[name="exportFormat"]:checked').value;
         const fileName = document.getElementById('exportFileName').value || 'fichier_exporte';
 
-        exportFile(data, fileName, format);
+        showLoader();
+
+        setTimeout(() => {
+            exportFile(data, fileName, format);
+            hideLoader();
+        }, 100);
     });
 }
 
@@ -651,12 +797,12 @@ function updateExportTab() {
 
     if (!data) return;
 
-    const exportMessage = document.getElementById('exportMessage');
+    const noDataMessage = document.getElementById('noDataMessage');
     const exportOptions = document.getElementById('exportOptions');
     const exportTableContainer = document.getElementById('exportTableContainer');
     const exportStats = document.getElementById('exportStats');
 
-    exportMessage.classList.add('hidden');
+    noDataMessage.classList.add('hidden');
     exportOptions.classList.remove('hidden');
 
     exportTableContainer.innerHTML = createTableHTML(data);
@@ -669,9 +815,8 @@ function exportFile(data, fileName, format) {
         const formattedData = data.map(row =>
             row.map(cell => {
                 const value = String(cell);
-                // Check if it's a large number (10+ digits) - prefix with apostrophe for Excel
                 if (/^\d{10,}$/.test(value)) {
-                    return `'${value}`; // Apostrophe forces Excel to treat as text
+                    return `'${value}`;
                 }
                 return cell;
             })
@@ -698,10 +843,8 @@ function exportFile(data, fileName, format) {
             writeOptions.bookSST = false;
         }
 
-        // Generate file as array buffer
         const wbout = XLSX.write(wb, writeOptions);
 
-        // Create blob and download with proper filename
         const blob = new Blob([wbout], {
             type: format === 'csv'
                 ? 'text/csv;charset=utf-8;'
@@ -717,7 +860,6 @@ function exportFile(data, fileName, format) {
         link.click();
         document.body.removeChild(link);
 
-        // Clean up the URL object
         setTimeout(() => URL.revokeObjectURL(url), 100);
 
         showAlert(`Fichier exporté: ${fileName}.${format}`, 'success');
@@ -730,7 +872,7 @@ function exportFile(data, fileName, format) {
 // Initialize Application
 // ========================================
 document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
+    initNavigation();
     initImportMerge();
     initReorganize();
     initExport();
