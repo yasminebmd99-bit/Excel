@@ -157,6 +157,9 @@ function similarity(s1, s2) {
 function formatPhoneNumber(value, removeLeadingZero, removePlus33) {
     if (!value) return value;
 
+    // Si la valeur contient des lettres, on ne touche pas (pour éviter de casser les adresses, emails, etc.)
+    if (/[a-zA-Z]/.test(String(value))) return value;
+
     let strValue = String(value).trim().replace(/[\s\-\.\(\)]/g, '');
 
     // Remove +33 prefix if option is enabled
