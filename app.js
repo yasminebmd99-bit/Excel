@@ -250,6 +250,26 @@ function initImportMerge() {
     const mergeCard = document.getElementById('mergeCard');
     const mergeBtn = document.getElementById('mergeBtn');
     const downloadExampleBtn = document.getElementById('downloadExampleBtn');
+    const clearAllFilesBtn = document.getElementById('clearAllFilesBtn');
+
+    if (clearAllFilesBtn) {
+        clearAllFilesBtn.addEventListener('click', () => {
+            if (AppState.importedFiles.length === 0) return;
+
+            if (confirm('Voulez-vous vraiment supprimer tous les fichiers importés ? Cette action effacera également les données fusionnées.')) {
+                AppState.importedFiles = [];
+                AppState.mergedData = null;
+                updateFileList();
+
+                // Hide merge preview
+                document.getElementById('mergePreview').classList.add('hidden');
+                document.getElementById('mergeTableContainer').innerHTML = '';
+                document.getElementById('mergeStats').innerHTML = '';
+
+                showAlert('Tous les fichiers ont été supprimés', 'success');
+            }
+        });
+    }
 
     uploadZone.addEventListener('click', () => fileInput.click());
 
@@ -630,6 +650,29 @@ function initReorganize() {
     const applyMappingBtn = document.getElementById('applyMappingBtn');
     const selectAllBtn = document.getElementById('selectAllColumns');
     const deselectAllBtn = document.getElementById('deselectAllColumns');
+    const resetReorganizeBtn = document.getElementById('resetReorganizeBtn');
+
+    if (resetReorganizeBtn) {
+        resetReorganizeBtn.addEventListener('click', () => {
+            if (confirm('Voulez-vous vraiment réinitialiser la réorganisation actuelle ?')) {
+                AppState.reorganizeFile = null;
+                AppState.reorganizedData = null;
+                AppState.columnOrder = [];
+                AppState.columnVisibility = {};
+
+                // Interface reset
+                document.getElementById('mappingCard').classList.add('hidden');
+                document.getElementById('reorganizeImportCard').classList.remove('hidden');
+
+                // Clear inputs
+                if (reorganizeFileInput) reorganizeFileInput.value = '';
+                document.getElementById('reorganizePreview').classList.add('hidden');
+                document.getElementById('reorganizeTableContainer').innerHTML = '';
+
+                showAlert('Réorganisation réinitialisée', 'success');
+            }
+        });
+    }
 
     reorganizeUploadZone.addEventListener('click', () => reorganizeFileInput.click());
 

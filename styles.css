@@ -525,6 +525,47 @@ h4 {
   color: white;
 }
 
+/* Text Button */
+.btn-text {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btn-text:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn-destructive {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.btn-destructive:hover {
+  background: hsl(0, 85%, 95%);
+  color: hsl(0, 85%, 45%);
+  border-color: hsl(0, 85%, 45%);
+}
+
+.btn-text.btn-destructive {
+  color: var(--error);
+}
+
+.btn-text.btn-destructive:hover {
+  background: hsl(0, 85%, 95%);
+}
+
 /* Actions Bar */
 .actions-bar {
   display: flex;

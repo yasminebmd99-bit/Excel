@@ -110,8 +110,13 @@
 
                 <div id="fileListContainer" class="file-list hidden">
                     <div class="file-list-header">
-                        <h4>Fichiers importés</h4>
-                        <span class="file-count" id="fileCount">0 fichiers</span>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h4>Fichiers importés</h4>
+                            <span class="file-count" id="fileCount">0 fichiers</span>
+                        </div>
+                        <button class="btn-text btn-destructive" id="clearAllFilesBtn">
+                            <span>🗑️</span> Tout supprimer
+                        </button>
                     </div>
                     <div id="fileList"></div>
                     <div id="importStats" class="import-stats hidden"></div>
@@ -170,6 +175,10 @@
                 <div class="actions-bar">
                     <button class="btn btn-secondary" id="autoMapBtn">
                         <span>✨</span> Détection automatique
+                    </button>
+
+                    <button class="btn btn-secondary btn-destructive" id="resetReorganizeBtn">
+                        <span>🗑️</span> Réinitialiser
                     </button>
 
                     <div class="phone-options">
