@@ -87,7 +87,6 @@ function readExcelFile(file) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {
                     type: 'array',
-                    codepage: 65001,
                     cellText: false,
                     cellDates: true,
                     raw: true
