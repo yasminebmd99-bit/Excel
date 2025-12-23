@@ -85,12 +85,52 @@ function readExcelFile(file) {
         reader.onload = (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {
-                    type: 'array',
-                    cellText: false,
-                    cellDates: true,
-                    raw: true
-                });
+                const isCSV = file.name.toLowerCase().endsWith('.csv');
+
+                let workbook;
+
+                if (isCSV) {
+                    // Pour les fichiers CSV, détecter l'encodage
+                    let textContent;
+
+                    // Essayer d'abord UTF-8
+                    const decoder = new TextDecoder('utf-8', { fatal: true });
+                    try {
+                        textContent = decoder.decode(data);
+                    } catch (utf8Error) {
+                        // Si UTF-8 échoue, utiliser Windows-1252 (Latin-1)
+                        const latin1Decoder = new TextDecoder('windows-1252');
+                        textContent = latin1Decoder.decode(data);
+                    }
+
+                    // Vérifier si le texte contient des caractères de remplacement (signe d'encodage incorrect)
+                    if (textContent.includes('\uFFFD')) {
+                        // Réessayer avec Windows-1252
+                        const latin1Decoder = new TextDecoder('windows-1252');
+                        textContent = latin1Decoder.decode(data);
+                    }
+
+                    // Supprimer le BOM si présent
+                    if (textContent.charCodeAt(0) === 0xFEFF) {
+                        textContent = textContent.substring(1);
+                    }
+
+                    workbook = XLSX.read(textContent, {
+                        type: 'string',
+                        cellText: false,
+                        cellDates: true,
+                        raw: true
+                    });
+                } else {
+                    // Pour les fichiers Excel, utiliser la lecture binaire standard
+                    workbook = XLSX.read(data, {
+                        type: 'array',
+                        cellText: false,
+                        cellDates: true,
+                        raw: true
+                    });
+                }
+
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
                     header: 1,
