@@ -265,6 +265,9 @@ function initImportMerge() {
                 document.getElementById('mergeTableContainer').innerHTML = '';
                 document.getElementById('mergeStats').innerHTML = '';
 
+                // Clear file input to allow re-selecting the same file
+                if (fileInput) fileInput.value = '';
+
                 showAlert('Tous les fichiers ont été supprimés', 'success');
             }
         });
@@ -890,7 +893,14 @@ function exportFile(data, fileName, format) {
 
         const wbout = XLSX.write(wb, writeOptions);
 
-        const blob = new Blob([wbout], {
+        const blobParts = [wbout];
+        if (format === 'csv') {
+            // Add BOM for Excel to recognize UTF-8
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            blobParts.unshift(bom);
+        }
+
+        const blob = new Blob(blobParts, {
             type: format === 'csv'
                 ? 'text/csv;charset=utf-8;'
                 : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
