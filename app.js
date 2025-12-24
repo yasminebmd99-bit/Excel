@@ -149,6 +149,11 @@ function readExcelFile(file) {
                     row.map(cell => {
                         if (cell === null || cell === undefined) return '';
                         if (typeof cell === 'number') {
+                            // Pour les grands nombres (SIRET, etc.), éviter la notation scientifique
+                            // Utiliser toLocaleString avec les options pour afficher le nombre complet
+                            if (cell > 999999999) {
+                                return cell.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 0 });
+                            }
                             return cell.toString();
                         }
                         return String(cell);
