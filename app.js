@@ -149,11 +149,6 @@ function readExcelFile(file) {
                     row.map(cell => {
                         if (cell === null || cell === undefined) return '';
                         if (typeof cell === 'number') {
-                            // Pour les grands nombres (SIRET, etc.), éviter la notation scientifique
-                            // Utiliser toLocaleString avec les options pour afficher le nombre complet
-                            if (cell > 999999999) {
-                                return cell.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 0 });
-                            }
                             return cell.toString();
                         }
                         return String(cell);
@@ -910,11 +905,13 @@ function updateExportTab() {
 
 function exportFile(data, fileName, format) {
     try {
-        // Prepare data with apostrophe prefix for large numbers (SIRET, etc.)
-        const formattedData = data.map(row =>
+        // Prepare data with apostrophe prefix for large numbers (SIRET, phone numbers, etc.)
+        // This prevents Excel from converting them to scientific notation or truncating them
+        const formattedData = data.map((row, rowIndex) =>
             row.map(cell => {
                 const value = String(cell);
-                if (/^\d{10,}$/.test(value)) {
+                // Ajouter apostrophe pour les nombres de 9 chiffres ou plus (téléphones, SIRET, etc.)
+                if (/^\d{9,}$/.test(value)) {
                     return `'${value}`;
                 }
                 return cell;
@@ -922,6 +919,19 @@ function exportFile(data, fileName, format) {
         );
 
         const ws = XLSX.utils.aoa_to_sheet(formattedData);
+
+        // Forcer le format texte pour les cellules avec de grands nombres
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                const cell = ws[cellAddress];
+                if (cell && cell.v && /^'\d{9,}$/.test(String(cell.v))) {
+                    cell.t = 's'; // Force text type
+                }
+            }
+        }
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
 
