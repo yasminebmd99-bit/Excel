@@ -119,22 +119,28 @@ function readExcelFile(file) {
                         type: 'string',
                         cellText: false,
                         cellDates: true,
+                        cellNF: false,
                         raw: true
                     });
                 } else {
                     // Pour les fichiers Excel, utiliser la lecture binaire standard
+                    // cellNF: false pour ignorer les formats de nombres personnalisés (qui peuvent ajouter des 0)
                     workbook = XLSX.read(data, {
                         type: 'array',
                         cellText: false,
                         cellDates: true,
+                        cellNF: false,
                         raw: true
                     });
                 }
 
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                // Lire les valeurs brutes sans formatage
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
                     header: 1,
                     raw: true,
+                    rawNumbers: true,
                     defval: ''
                 });
 
