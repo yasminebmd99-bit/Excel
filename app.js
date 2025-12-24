@@ -911,9 +911,9 @@ function exportFile(data, fileName, format) {
             row.map(cell => {
                 if (cell === null || cell === undefined) return '';
                 const value = String(cell).trim();
-                // Ajouter apostrophe pour les nombres de 9 chiffres ou plus (téléphones, SIRET, etc.)
-                // On vérifie si la chaîne n'est composée que de chiffres
-                if (/^\d{9,}$/.test(value)) {
+                // Ajouter apostrophe uniquement pour les nombres très longs (11 chiffres ou plus)
+                // Cela protège le SIRET (14 chiffres) mais laisse les téléphones (9-10 chiffres) tels quels
+                if (/^\d{11,}$/.test(value)) {
                     return `'${value}`;
                 }
                 return cell;
