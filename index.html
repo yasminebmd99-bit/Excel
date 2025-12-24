@@ -97,9 +97,10 @@
                         <span class="format-badge">XLSX</span>
                         <span class="format-badge">XLS</span>
                         <span class="format-badge">CSV</span>
+                        <span class="format-badge">TXT</span>
                     </div>
-                    <p class="upload-hint">Taille recommandée : moins de 10 Mo par fichier</p>
-                    <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv">
+                    <p class="upload-hint">Taille maximale : 200 Mo par fichier</p>
+                    <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv,.txt">
                 </div>
 
                 <div class="example-download">
@@ -161,7 +162,7 @@
                     <div class="upload-icon">☁️</div>
                     <h3>Déposez votre fichier ici</h3>
                     <p>ou cliquez pour le sélectionner</p>
-                    <input type="file" id="reorganizeFileInput" accept=".xlsx,.xls,.csv">
+                    <input type="file" id="reorganizeFileInput" accept=".xlsx,.xls,.csv,.txt">
                 </div>
             </div>
 
@@ -276,6 +277,13 @@
                         </label>
 
                         <label class="format-option">
+                            <input type="radio" name="exportFormat" value="txt">
+                            <div class="format-icon">📝</div>
+                            <div class="format-label">TXT</div>
+                            <div class="format-desc">Texte tabulé</div>
+                        </label>
+
+                        <label class="format-option">
                             <input type="radio" name="exportFormat" value="ods">
                             <div class="format-icon">📙</div>
                             <div class="format-label">ODS</div>
@@ -373,8 +381,8 @@
                 </div>
                 <div class="faq-item">
                     <h4>Quelle est la taille maximale des fichiers ?</h4>
-                    <p>Nous recommandons des fichiers de moins de 10 Mo pour des performances optimales. Les fichiers
-                        plus volumineux peuvent ralentir le traitement.</p>
+                    <p>L'application supporte des fichiers jusqu'à 200 Mo. Pour des performances optimales, nous
+                        recommandons des fichiers de moins de 50 Mo.</p>
                 </div>
                 <div class="faq-item">
                     <h4>Combien de fichiers puis-je fusionner ?</h4>

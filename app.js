@@ -85,7 +85,7 @@ function readExcelFile(file) {
         reader.onload = (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const isCSV = file.name.toLowerCase().endsWith('.csv');
+                const isCSV = file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt');
 
                 let workbook;
 
@@ -358,7 +358,7 @@ function initImportMerge() {
     });
 
     async function handleFiles(files) {
-        const validExtensions = ['.xlsx', '.xls', '.csv'];
+        const validExtensions = ['.xlsx', '.xls', '.csv', '.txt'];
         showLoader();
 
         for (let file of files) {
@@ -746,7 +746,7 @@ function initReorganize() {
     async function handleReorganizeFile(file) {
         if (!file) return;
 
-        const validExtensions = ['.xlsx', '.xls', '.csv'];
+        const validExtensions = ['.xlsx', '.xls', '.csv', '.txt'];
         const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
         if (!validExtensions.includes(ext)) {
@@ -949,7 +949,7 @@ function exportFile(data, fileName, format) {
         let bookType = format;
         if (format === 'xlsx') bookType = 'xlsx';
         else if (format === 'xls') bookType = 'xls';
-        else if (format === 'csv') bookType = 'csv';
+        else if (format === 'csv' || format === 'txt') bookType = 'csv';
         else if (format === 'ods') bookType = 'ods';
 
         const writeOptions = {
@@ -958,23 +958,24 @@ function exportFile(data, fileName, format) {
             codepage: 65001
         };
 
-        if (format === 'csv') {
-            writeOptions.FS = ';';
+        if (format === 'csv' || format === 'txt') {
+            // Pour TXT, utiliser tabulation comme séparateur; pour CSV, utiliser point-virgule
+            writeOptions.FS = format === 'txt' ? '\t' : ';';
             writeOptions.bookSST = false;
         }
 
         const wbout = XLSX.write(wb, writeOptions);
 
         const blobParts = [wbout];
-        if (format === 'csv') {
+        if (format === 'csv' || format === 'txt') {
             // Add BOM for Excel to recognize UTF-8
             const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
             blobParts.unshift(bom);
         }
 
         const blob = new Blob(blobParts, {
-            type: format === 'csv'
-                ? 'text/csv;charset=utf-8;'
+            type: (format === 'csv' || format === 'txt')
+                ? 'text/plain;charset=utf-8;'
                 : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         });
 
