@@ -905,37 +905,7 @@ function updateExportTab() {
 
 function exportFile(data, fileName, format) {
     try {
-        // Prepare data with apostrophe prefix for large numbers (SIRET, phone numbers, etc.)
-        // This prevents Excel from converting them to scientific notation or truncating them
-        const formattedData = data.map((row) =>
-            row.map(cell => {
-                if (cell === null || cell === undefined) return '';
-                const value = String(cell).trim();
-                // Ajouter apostrophe uniquement pour les nombres très longs (11 chiffres ou plus)
-                // Cela protège le SIRET (14 chiffres) mais laisse les téléphones (9-10 chiffres) tels quels
-                if (/^\d{11,}$/.test(value)) {
-                    return `'${value}`;
-                }
-                return cell;
-            })
-        );
-
-        const ws = XLSX.utils.aoa_to_sheet(formattedData);
-
-        // Forcer le format texte pour les cellules avec de grands nombres (commençant par ')
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-                const cell = ws[cellAddress];
-                if (cell && cell.v && typeof cell.v === 'string' && cell.v.startsWith("'")) {
-                    cell.t = 's'; // Force string type
-                    // On peut aussi essayer de définir le format de nombre en texte
-                    cell.z = '@';
-                }
-            }
-        }
-
+        const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
 
