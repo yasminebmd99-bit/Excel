@@ -907,10 +907,12 @@ function exportFile(data, fileName, format) {
     try {
         // Prepare data with apostrophe prefix for large numbers (SIRET, phone numbers, etc.)
         // This prevents Excel from converting them to scientific notation or truncating them
-        const formattedData = data.map((row, rowIndex) =>
+        const formattedData = data.map((row) =>
             row.map(cell => {
-                const value = String(cell);
+                if (cell === null || cell === undefined) return '';
+                const value = String(cell).trim();
                 // Ajouter apostrophe pour les nombres de 9 chiffres ou plus (téléphones, SIRET, etc.)
+                // On vérifie si la chaîne n'est composée que de chiffres
                 if (/^\d{9,}$/.test(value)) {
                     return `'${value}`;
                 }
@@ -920,14 +922,16 @@ function exportFile(data, fileName, format) {
 
         const ws = XLSX.utils.aoa_to_sheet(formattedData);
 
-        // Forcer le format texte pour les cellules avec de grands nombres
+        // Forcer le format texte pour les cellules avec de grands nombres (commençant par ')
         const range = XLSX.utils.decode_range(ws['!ref']);
         for (let R = range.s.r; R <= range.e.r; ++R) {
             for (let C = range.s.c; C <= range.e.c; ++C) {
                 const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
                 const cell = ws[cellAddress];
-                if (cell && cell.v && /^'\d{9,}$/.test(String(cell.v))) {
-                    cell.t = 's'; // Force text type
+                if (cell && cell.v && typeof cell.v === 'string' && cell.v.startsWith("'")) {
+                    cell.t = 's'; // Force string type
+                    // On peut aussi essayer de définir le format de nombre en texte
+                    cell.z = '@';
                 }
             }
         }
