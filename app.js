@@ -369,8 +369,8 @@ function initImportMerge() {
                 continue;
             }
 
-            if (file.size > 10 * 1024 * 1024) {
-                showAlert(`Fichier trop volumineux: ${file.name} (max 10 Mo)`, 'warning');
+            if (file.size > 200 * 1024 * 1024) {
+                showAlert(`Fichier très volumineux: ${file.name} (max recommandé 200 Mo)`, 'warning');
             }
 
             try {
